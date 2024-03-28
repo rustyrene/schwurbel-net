@@ -22,8 +22,9 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(app_state))
+            .app_data(web::Data::new(app_state.clone()))
             .service(fs::Files::new("/", "../static").index_file("index.html"))
+            .route("/ws/", web::get().to(connect_client))
     })
     .workers(4)
     .bind(("127.0.0.1", 3000))?
