@@ -14,6 +14,15 @@ pub struct Lobby {
     pub chat_rooms: HashMap<Uuid, Addr<Room>>,
 }
 
+impl Lobby {
+    pub fn new() -> Lobby {
+        Lobby {
+            sessions: HashMap::new(),
+            chat_rooms: HashMap::new(),
+        }
+    }
+}
+
 impl Actor for Lobby {
     type Context = Context<Self>;
 }
