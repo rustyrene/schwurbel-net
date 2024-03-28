@@ -1,30 +1,19 @@
 use actix::{Actor, Addr};
 use actix_files as fs;
-use actix_web::{
-    web::{self, Payload},
-    App, Error, HttpRequest, HttpResponse, HttpServer,
-};
+use actix_web::{web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
-use actors::{lobby::Lobby, ws_conn::ws_conn};
+use actors::{lobby::Lobby, ws_conn::WsConn};
 
 mod actors;
 
-#[derive(Clone)]
-struct AppState {
-    lobby_addr: Addr<Lobby>,
-}
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let app_state = AppState {
-        lobby_addr: Lobby::new().start(),
-    };
-
+    let lobby_addr = Lobby::new().start();
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(app_state.clone()))
+            .app_data(web::Data::new(lobby_addr.clone()))
+            .service(web::resource("ws/").route(web::get().to(connect_client)))
             .service(fs::Files::new("/", "../static").index_file("index.html"))
-            .route("/ws/", web::get().to(connect_client))
     })
     .workers(4)
     .bind(("127.0.0.1", 3000))?
@@ -35,9 +24,10 @@ async fn main() -> std::io::Result<()> {
 async fn connect_client(
     req: HttpRequest,
     stream: web::Payload,
-    app_state: web::Data<AppState>,
+    lobby_addr: web::Data<Addr<Lobby>>,
 ) -> Result<HttpResponse, Error> {
-    let lobby_addr = &app_state.lobby_addr;
-    let client = ws_conn::new(lobby_addr.clone());
+    println!("Connecting!");
+    let lobby_addr = lobby_addr.get_ref().clone();
+    let client = WsConn::new(lobby_addr);
     ws::start(client, &req, stream)
 }

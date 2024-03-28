@@ -1,14 +1,14 @@
 use actix::prelude::*;
 use uuid::Uuid;
 
-use super::ws_conn::ws_conn;
+use super::ws_conn::WsConn;
 
 // User connects to lobby
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Connect {
     pub user_id: Uuid,
-    pub user_addr: Addr<ws_conn>,
+    pub user_addr: Addr<WsConn>,
 }
 
 // User disconnects from lobby

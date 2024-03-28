@@ -6,11 +6,11 @@ use uuid::Uuid;
 use super::{
     chat_room::Room,
     messages::{Connect, Disconnect},
-    ws_conn::ws_conn,
+    ws_conn::WsConn,
 };
 
 pub struct Lobby {
-    pub sessions: HashMap<Uuid, Addr<ws_conn>>,
+    pub sessions: HashMap<Uuid, Addr<WsConn>>,
     pub chat_rooms: HashMap<Uuid, Addr<Room>>,
 }
 

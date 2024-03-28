@@ -11,16 +11,16 @@ use super::{chat_room::Room, lobby::Lobby, messages::Connect};
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
-pub struct ws_conn {
+pub struct WsConn {
     id: Uuid,
     hb: Instant,
     lobby_addr: Addr<Lobby>,
     room_addr: Option<Addr<Room>>,
 }
 
-impl ws_conn {
-    pub fn new(lobby_addr: Addr<Lobby>) -> ws_conn {
-        ws_conn {
+impl WsConn {
+    pub fn new(lobby_addr: Addr<Lobby>) -> WsConn {
+        WsConn {
             id: Uuid::new_v4(),
             hb: Instant::now(),
             lobby_addr,
@@ -50,7 +50,7 @@ impl ws_conn {
     }
 }
 
-impl Actor for ws_conn {
+impl Actor for WsConn {
     type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
@@ -76,7 +76,7 @@ impl Actor for ws_conn {
     }
 }
 
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ws_conn {
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
     fn handle(&mut self, item: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         // Check for potential error
         let msg = match item {
@@ -106,5 +106,5 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ws_conn {
 }
 
 fn handle_message(msg: String) {
-    println!("{msg}")
+    println!("Test")
 }
