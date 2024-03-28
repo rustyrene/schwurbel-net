@@ -17,3 +17,16 @@ pub struct Connect {
 pub struct Disconnect {
     pub user_id: Uuid,
 }
+
+// Server Message to client
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Message(pub String);
+
+// ClientMessage to Server/Chatroom
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ClientMessage {
+    pub sender_id: Uuid,
+    pub message: String,
+}

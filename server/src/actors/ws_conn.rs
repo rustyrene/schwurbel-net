@@ -6,7 +6,11 @@ use uuid::Uuid;
 
 use crate::actors::messages::Disconnect;
 
-use super::{chat_room::Room, lobby::Lobby, messages::Connect};
+use super::{
+    chat_room::Room,
+    lobby::Lobby,
+    messages::{ClientMessage, Connect, Message},
+};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -100,12 +104,22 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
                 ctx.close(reason);
                 ctx.stop();
             }
-            ws::Message::Text(msg) => handle_message(msg.to_string()),
+            ws::Message::Text(msg) => handle_message(&self, msg.to_string()),
         }
     }
 }
 
-fn handle_message(msg: String) {
-    println!("Test");
-    println!("{msg}");
+impl Handler<Message> for WsConn {
+    type Result = ();
+
+    fn handle(&mut self, msg: Message, ctx: &mut Self::Context) {
+        ctx.text(msg.0);
+    }
+}
+
+fn handle_message(ws_conn: &WsConn, msg: String) {
+    ws_conn.lobby_addr.do_send(ClientMessage {
+        sender_id: ws_conn.id,
+        message: msg,
+    });
 }

@@ -7,6 +7,9 @@ function App() {
 
   useEffect(() => {
     socketRef.current = new WebSocket("ws://localhost:3000/ws/");
+    socketRef.current.addEventListener("message", function(event) {
+      console.log(event.data);
+    })
     return () => {
       socketRef.current?.close();
     }

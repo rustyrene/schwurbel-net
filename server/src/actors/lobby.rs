@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use super::{
     chat_room::Room,
-    messages::{Connect, Disconnect},
+    messages::{ClientMessage, Connect, Disconnect, Message},
     ws_conn::WsConn,
 };
 
@@ -40,5 +40,17 @@ impl Handler<Connect> for Lobby {
 
     fn handle(&mut self, msg: Connect, _ctx: &mut Self::Context) -> Self::Result {
         self.sessions.insert(msg.user_id, msg.user_addr);
+    }
+}
+
+impl Handler<ClientMessage> for Lobby {
+    type Result = ();
+
+    fn handle(&mut self, msg: ClientMessage, _ctx: &mut Self::Context) -> Self::Result {
+        for (user_id, user_addr) in self.sessions.clone() {
+            if user_id != msg.sender_id {
+                user_addr.do_send(Message(msg.message.clone()))
+            }
+        }
     }
 }
