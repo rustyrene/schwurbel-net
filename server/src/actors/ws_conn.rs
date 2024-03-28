@@ -106,5 +106,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
 }
 
 fn handle_message(msg: String) {
-    println!("Test")
+    println!("Test");
+    println!("{msg}");
 }
