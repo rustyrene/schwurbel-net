@@ -75,3 +75,36 @@ impl Actor for ws_conn {
             .wait(ctx);
     }
 }
+
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ws_conn {
+    fn handle(&mut self, item: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        // Check for potential error
+        let msg = match item {
+            Ok(msg) => msg,
+            _ => {
+                ctx.stop();
+                return;
+            }
+        };
+
+        match msg {
+            ws::Message::Ping(msg) => {
+                self.hb = Instant::now();
+                ctx.pong(&msg);
+            }
+            ws::Message::Pong(_) => self.hb = Instant::now(),
+            ws::Message::Nop => (),
+            ws::Message::Binary(_) => (),
+            ws::Message::Continuation(_) => ctx.stop(),
+            ws::Message::Close(reason) => {
+                ctx.close(reason);
+                ctx.stop();
+            }
+            ws::Message::Text(msg) => handle_message(msg.to_string()),
+        }
+    }
+}
+
+fn handle_message(msg: String) {
+    println!("{msg}")
+}
