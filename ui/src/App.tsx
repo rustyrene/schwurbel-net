@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { FormEvent, useEffect, useRef } from "react";
 import WebChat from "./Chat/WebChat"
 
 function App() {
@@ -12,9 +12,10 @@ function App() {
     }
   }, [])
 
-  const onSendMessage = () => {
+  const onSendMessage = (event: FormEvent, msg:string) => {
+    event.preventDefault();
     if (socketRef.current && socketRef.current.readyState == WebSocket.OPEN) {
-      socketRef.current.send("Sending!");
+      socketRef.current.send(msg);
     }
   }
 
