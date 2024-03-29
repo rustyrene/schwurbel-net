@@ -9,7 +9,7 @@ use crate::actors::messages::Disconnect;
 use super::{
     chat_room::Room,
     lobby::Lobby,
-    messages::{ClientMessage, Connect, Message},
+    messages::{ClientMessage, Connect, CreateRoom, Message},
 };
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -118,8 +118,21 @@ impl Handler<Message> for WsConn {
 }
 
 fn handle_message(ws_conn: &WsConn, msg: String) {
+    let v: Vec<&str> = msg.splitn(2, " ").collect();
+
+    match v[0] {
+        "/create" => create_room(ws_conn),
+        _ => (),
+    };
+
     ws_conn.lobby_addr.do_send(ClientMessage {
         sender_id: ws_conn.id,
         message: msg,
+    });
+}
+
+fn create_room(ws_conn: &WsConn) {
+    ws_conn.lobby_addr.do_send(CreateRoom {
+        creater_id: ws_conn.id,
     });
 }

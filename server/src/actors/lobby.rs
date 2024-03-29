@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use super::{
     chat_room::Room,
-    messages::{ClientMessage, Connect, Disconnect, Message},
+    messages::{ClientMessage, Connect, CreateRoom, Disconnect, Message},
     ws_conn::WsConn,
 };
 
@@ -52,5 +52,21 @@ impl Handler<ClientMessage> for Lobby {
                 user_addr.do_send(Message(msg.message.clone()))
             }
         }
+    }
+}
+
+impl Handler<CreateRoom> for Lobby {
+    type Result = ();
+
+    fn handle(&mut self, msg: CreateRoom, _ctx: &mut Self::Context) {
+        println!("Creating!");
+        let creater_addr = self
+            .sessions
+            .get(&msg.creater_id)
+            .expect("Session not found");
+        let mut room = Room::new();
+        room.add_user(msg.creater_id, creater_addr.clone());
+        self.chat_rooms.insert(room.id, room.start());
+        creater_addr.do_send(Message("/success".to_string()));
     }
 }

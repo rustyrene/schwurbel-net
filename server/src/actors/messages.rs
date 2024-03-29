@@ -30,3 +30,10 @@ pub struct ClientMessage {
     pub sender_id: Uuid,
     pub message: String,
 }
+
+// ClientMessage to Server/Chatroom
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct CreateRoom {
+    pub creater_id: Uuid,
+}
