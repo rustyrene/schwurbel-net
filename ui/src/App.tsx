@@ -10,7 +10,7 @@ function App() {
 
   useEffect(() => {
     const onReciveMessage = (event: MessageEvent<string>) => {
-      setMessages([...messages, {
+      setMessages(prevMessages => [...prevMessages, {
         msg: event.data,
         isAuthor: false,
       }])
@@ -21,7 +21,7 @@ function App() {
     return () => {
       socketRef.current?.close();
     }
-  }, [messages])
+  }, [])
 
   const onSendMessage = (event: FormEvent, msg:string) => {
     event.preventDefault();
