@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use actix::prelude::*;
-use actix_web_actors::ws;
+use actix_web_actors::ws::{self, WebsocketContext};
 use uuid::Uuid;
 
 use crate::actors::messages::Disconnect;
@@ -9,7 +9,7 @@ use crate::actors::messages::Disconnect;
 use super::{
     chat_room::Room,
     lobby::Lobby,
-    messages::{ClientMessage, Connect, CreateRoom, Message},
+    messages::{ClientMessage, Connect, CreateRoom, JoinRoom, Message},
 };
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -104,7 +104,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
                 ctx.close(reason);
                 ctx.stop();
             }
-            ws::Message::Text(msg) => handle_message(&self, msg.to_string()),
+            ws::Message::Text(msg) => handle_message(&self, msg.to_string(), ctx),
         }
     }
 }
@@ -117,22 +117,76 @@ impl Handler<Message> for WsConn {
     }
 }
 
-fn handle_message(ws_conn: &WsConn, msg: String) {
-    let v: Vec<&str> = msg.splitn(2, " ").collect();
+fn handle_message(ws_conn: &WsConn, msg: String, ctx: &mut WebsocketContext<WsConn>) {
+    if msg.starts_with("/") {
+        let v: Vec<&str> = msg.splitn(2, " ").collect();
 
-    match v[0] {
-        "/create" => create_room(ws_conn),
-        _ => (),
-    };
-
-    ws_conn.lobby_addr.do_send(ClientMessage {
-        sender_id: ws_conn.id,
-        message: msg,
-    });
+        match v[0] {
+            "/create" => create_room(ws_conn, ctx),
+            "/join" => join_room(ws_conn, ctx, v),
+            _ => (),
+        };
+    } else {
+        if ws_conn.room_addr.is_some() {
+            ws_conn
+                .room_addr
+                .to_owned()
+                .unwrap()
+                .do_send(ClientMessage {
+                    sender_id: ws_conn.id,
+                    message: msg,
+                });
+        }
+    }
 }
 
-fn create_room(ws_conn: &WsConn) {
-    ws_conn.lobby_addr.do_send(CreateRoom {
-        creater_id: ws_conn.id,
-    });
+fn join_room(ws_conn: &WsConn, ctx: &mut WebsocketContext<WsConn>, msg: Vec<&str>) {
+    if msg.len() != 2 {
+        ctx.address()
+            .do_send(Message("/error No Room Id Provided".to_string()));
+        return;
+    }
+    if let Ok(room_id) = Uuid::parse_str(msg[1]) {
+        ws_conn
+            .lobby_addr
+            .send(JoinRoom {
+                user_id: ws_conn.id,
+                room_id,
+            })
+            .into_actor(ws_conn)
+            .then(|res, act, ctx| {
+                match res {
+                    Ok(Some(room_addr)) => act.joinRoom(room_addr),
+                    Err(err) => ctx
+                        .address()
+                        .do_send(Message("/error Cant join room".to_string())),
+                    Ok(None) => ctx
+                        .address()
+                        .do_send(Message("room addr is none".to_string())),
+                }
+                fut::ready(())
+            })
+            .wait(ctx);
+    } else {
+        ctx.address()
+            .do_send(Message("/error No Room with given Id exists".to_string()))
+    }
+}
+
+// creates a room and ws_conn joins it.
+fn create_room(ws_conn: &WsConn, ctx: &mut WebsocketContext<WsConn>) {
+    ws_conn
+        .lobby_addr
+        .send(CreateRoom {
+            creater_id: ws_conn.id,
+        })
+        .into_actor(ws_conn)
+        .then(|res, act, ctx| {
+            match res {
+                Ok(room_addr) => act.joinRoom(room_addr),
+                _ => ctx.stop(),
+            }
+            fut::ready(())
+        })
+        .wait(ctx);
 }

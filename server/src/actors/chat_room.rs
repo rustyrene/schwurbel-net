@@ -3,10 +3,15 @@ use std::collections::HashMap;
 use actix::prelude::*;
 use uuid::Uuid;
 
-use super::ws_conn::WsConn;
+use super::{
+    messages::{ClientMessage, Message},
+    ws_conn::WsConn,
+};
 
+#[derive(Clone)]
 pub struct Room {
     pub id: Uuid,
+    pub address: Option<Addr<Room>>,
     users: HashMap<Uuid, Addr<WsConn>>,
 }
 
@@ -14,6 +19,7 @@ impl Room {
     pub fn new() -> Room {
         Room {
             id: Uuid::new_v4(),
+            address: None,
             users: HashMap::new(),
         }
     }
@@ -29,4 +35,21 @@ impl Room {
 
 impl Actor for Room {
     type Context = Context<Self>;
+
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.address = Some(ctx.address());
+    }
+}
+
+impl Handler<ClientMessage> for Room {
+    type Result = ();
+
+    fn handle(&mut self, msg: ClientMessage, _ctx: &mut Self::Context) -> Self::Result {
+        println!("Send msg");
+        for (user_id, user_addr) in self.users.to_owned() {
+            if user_id != msg.sender_id {
+                user_addr.do_send(Message(msg.message.to_owned()))
+            }
+        }
+    }
 }

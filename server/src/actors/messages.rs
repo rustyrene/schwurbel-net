@@ -1,7 +1,7 @@
 use actix::prelude::*;
 use uuid::Uuid;
 
-use super::ws_conn::WsConn;
+use super::{chat_room::Room, ws_conn::WsConn};
 
 // User connects to lobby
 #[derive(Message)]
@@ -33,7 +33,15 @@ pub struct ClientMessage {
 
 // ClientMessage to Server/Chatroom
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype(result = "Addr<Room>")]
 pub struct CreateRoom {
     pub creater_id: Uuid,
+}
+
+// Join an existing room
+#[derive(Message)]
+#[rtype(result = "Option<Addr<Room>>")]
+pub struct JoinRoom {
+    pub user_id: Uuid,
+    pub room_id: Uuid,
 }

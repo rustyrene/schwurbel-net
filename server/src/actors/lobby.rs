@@ -5,13 +5,13 @@ use uuid::Uuid;
 
 use super::{
     chat_room::Room,
-    messages::{ClientMessage, Connect, CreateRoom, Disconnect, Message},
+    messages::{ClientMessage, Connect, CreateRoom, Disconnect, JoinRoom, Message},
     ws_conn::WsConn,
 };
 
 pub struct Lobby {
     pub sessions: HashMap<Uuid, Addr<WsConn>>,
-    pub chat_rooms: HashMap<Uuid, Addr<Room>>,
+    pub chat_rooms: HashMap<Uuid, Room>,
 }
 
 impl Lobby {
@@ -56,17 +56,40 @@ impl Handler<ClientMessage> for Lobby {
 }
 
 impl Handler<CreateRoom> for Lobby {
-    type Result = ();
+    type Result = Addr<Room>;
 
-    fn handle(&mut self, msg: CreateRoom, _ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: CreateRoom, _ctx: &mut Self::Context) -> Addr<Room> {
         println!("Creating!");
         let creater_addr = self
             .sessions
             .get(&msg.creater_id)
             .expect("Session not found");
         let mut room = Room::new();
+        let room_id = room.id.clone();
+        println!("{}", room_id);
         room.add_user(msg.creater_id, creater_addr.clone());
-        self.chat_rooms.insert(room.id, room.start());
-        creater_addr.do_send(Message("/success".to_string()));
+        let room_addr = room.clone().start();
+        self.chat_rooms.insert(room_id, room);
+        room_addr
+    }
+}
+
+impl Handler<JoinRoom> for Lobby {
+    type Result = Option<Addr<Room>>;
+
+    fn handle(&mut self, msg: JoinRoom, _ctx: &mut Self::Context) -> Option<Addr<Room>> {
+        let mut room = match self.chat_rooms.get(&msg.room_id) {
+            Some(room) => room.to_owned(),
+            _ => return None,
+        };
+        let user = self.sessions.get(&msg.user_id);
+        if user.is_none() {
+            return None;
+        }
+
+        let user_addr = user.expect("Error retriving User").to_owned();
+        room.add_user(msg.user_id, user_addr);
+
+        Some(room.clone().start())
     }
 }
