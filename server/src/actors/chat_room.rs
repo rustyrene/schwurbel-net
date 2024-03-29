@@ -4,7 +4,7 @@ use actix::prelude::*;
 use uuid::Uuid;
 
 use super::{
-    messages::{ClientMessage, Message},
+    messages::{ClientMessage, JoinRoom, Message},
     ws_conn::WsConn,
 };
 
@@ -28,7 +28,7 @@ impl Room {
         self.users.insert(user_id, user_addr)
     }
 
-    pub fn remove_user(&mut self, user_id: Uuid) {
+    pub fn _remove_user(&mut self, user_id: Uuid) {
         self.users.remove(&user_id);
     }
 }
@@ -51,5 +51,14 @@ impl Handler<ClientMessage> for Room {
                 user_addr.do_send(Message(msg.message.to_owned()))
             }
         }
+    }
+}
+
+impl Handler<JoinRoom> for Room {
+    type Result = ();
+
+    fn handle(&mut self, msg: JoinRoom, _ctx: &mut Self::Context) {
+        // TODO
+        self.add_user(msg.user_id, msg.user_addr);
     }
 }

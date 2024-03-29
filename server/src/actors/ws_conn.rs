@@ -9,7 +9,7 @@ use crate::actors::messages::Disconnect;
 use super::{
     chat_room::Room,
     lobby::Lobby,
-    messages::{ClientMessage, Connect, CreateRoom, JoinRoom, Message},
+    messages::{ClientMessage, Connect, CreateRoom, JoinRoomLobby, Message},
 };
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -45,11 +45,11 @@ impl WsConn {
         });
     }
 
-    pub fn joinRoom(&mut self, room_addr: Addr<Room>) {
+    pub fn join_room(&mut self, room_addr: Addr<Room>) {
         self.room_addr = Some(room_addr);
     }
 
-    pub fn leaveRoom(&mut self) {
+    pub fn _leave_room(&mut self) {
         self.room_addr = None;
     }
 }
@@ -128,6 +128,7 @@ fn handle_message(ws_conn: &WsConn, msg: String, ctx: &mut WebsocketContext<WsCo
         };
     } else {
         if ws_conn.room_addr.is_some() {
+            println!("Write to room");
             ws_conn
                 .room_addr
                 .to_owned()
@@ -149,15 +150,15 @@ fn join_room(ws_conn: &WsConn, ctx: &mut WebsocketContext<WsConn>, msg: Vec<&str
     if let Ok(room_id) = Uuid::parse_str(msg[1]) {
         ws_conn
             .lobby_addr
-            .send(JoinRoom {
+            .send(JoinRoomLobby {
                 user_id: ws_conn.id,
                 room_id,
             })
             .into_actor(ws_conn)
             .then(|res, act, ctx| {
                 match res {
-                    Ok(Some(room_addr)) => act.joinRoom(room_addr),
-                    Err(err) => ctx
+                    Ok(Some(room_addr)) => act.join_room(room_addr),
+                    Err(_) => ctx
                         .address()
                         .do_send(Message("/error Cant join room".to_string())),
                     Ok(None) => ctx
@@ -183,7 +184,7 @@ fn create_room(ws_conn: &WsConn, ctx: &mut WebsocketContext<WsConn>) {
         .into_actor(ws_conn)
         .then(|res, act, ctx| {
             match res {
-                Ok(room_addr) => act.joinRoom(room_addr),
+                Ok(room_addr) => act.join_room(room_addr),
                 _ => ctx.stop(),
             }
             fut::ready(())

@@ -41,7 +41,15 @@ pub struct CreateRoom {
 // Join an existing room
 #[derive(Message)]
 #[rtype(result = "Option<Addr<Room>>")]
-pub struct JoinRoom {
+pub struct JoinRoomLobby {
     pub user_id: Uuid,
     pub room_id: Uuid,
+}
+
+// Join an existing room
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct JoinRoom {
+    pub user_id: Uuid,
+    pub user_addr: Addr<WsConn>,
 }

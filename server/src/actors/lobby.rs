@@ -5,13 +5,13 @@ use uuid::Uuid;
 
 use super::{
     chat_room::Room,
-    messages::{ClientMessage, Connect, CreateRoom, Disconnect, JoinRoom, Message},
+    messages::{ClientMessage, Connect, CreateRoom, Disconnect, JoinRoom, JoinRoomLobby, Message},
     ws_conn::WsConn,
 };
 
 pub struct Lobby {
     pub sessions: HashMap<Uuid, Addr<WsConn>>,
-    pub chat_rooms: HashMap<Uuid, Room>,
+    pub chat_rooms: HashMap<Uuid, Addr<Room>>,
 }
 
 impl Lobby {
@@ -59,37 +59,42 @@ impl Handler<CreateRoom> for Lobby {
     type Result = Addr<Room>;
 
     fn handle(&mut self, msg: CreateRoom, _ctx: &mut Self::Context) -> Addr<Room> {
-        println!("Creating!");
         let creater_addr = self
             .sessions
             .get(&msg.creater_id)
             .expect("Session not found");
+
         let mut room = Room::new();
         let room_id = room.id.clone();
         println!("{}", room_id);
         room.add_user(msg.creater_id, creater_addr.clone());
-        let room_addr = room.clone().start();
-        self.chat_rooms.insert(room_id, room);
+        let room_addr = room.start();
+
+        self.chat_rooms.insert(room_id, room_addr.clone());
+
         room_addr
     }
 }
 
-impl Handler<JoinRoom> for Lobby {
+impl Handler<JoinRoomLobby> for Lobby {
     type Result = Option<Addr<Room>>;
 
-    fn handle(&mut self, msg: JoinRoom, _ctx: &mut Self::Context) -> Option<Addr<Room>> {
-        let mut room = match self.chat_rooms.get(&msg.room_id) {
-            Some(room) => room.to_owned(),
-            _ => return None,
+    fn handle(&mut self, msg: JoinRoomLobby, _ctx: &mut Self::Context) -> Option<Addr<Room>> {
+        let room_addr = match self.chat_rooms.get(&msg.room_id) {
+            Some(chat_room) => chat_room,
+            None => return None,
         };
+
         let user = self.sessions.get(&msg.user_id);
         if user.is_none() {
             return None;
         }
 
-        let user_addr = user.expect("Error retriving User").to_owned();
-        room.add_user(msg.user_id, user_addr);
+        room_addr.do_send(JoinRoom {
+            user_addr: user.unwrap().clone(),
+            user_id: msg.user_id,
+        });
 
-        Some(room.clone().start())
+        Some(room_addr.clone())
     }
 }
