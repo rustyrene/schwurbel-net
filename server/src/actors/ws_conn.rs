@@ -9,7 +9,7 @@ use crate::actors::messages::Disconnect;
 use super::{
     chat_room::Room,
     lobby::Lobby,
-    messages::{ClientMessage, Connect, CreateRoom, JoinRoomLobby, Message},
+    messages::{ClientMessage, Connect, CreateRoom, JoinRoomLobby, ListRooms, Message},
 };
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -124,6 +124,7 @@ fn handle_message(ws_conn: &WsConn, msg: String, ctx: &mut WebsocketContext<WsCo
         match v[0] {
             "/create" => create_room(ws_conn, ctx),
             "/join" => join_room(ws_conn, ctx, v),
+            "/list" => list_rooms(ws_conn, ctx),
             _ => (),
         };
     } else {
@@ -139,6 +140,12 @@ fn handle_message(ws_conn: &WsConn, msg: String, ctx: &mut WebsocketContext<WsCo
                 });
         }
     }
+}
+
+fn list_rooms(ws_conn: &WsConn, _ctx: &mut WebsocketContext<WsConn>) {
+    ws_conn.lobby_addr.do_send(ListRooms {
+        user_id: ws_conn.id,
+    });
 }
 
 fn join_room(ws_conn: &WsConn, ctx: &mut WebsocketContext<WsConn>, msg: Vec<&str>) {

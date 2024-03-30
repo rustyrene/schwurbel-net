@@ -5,7 +5,9 @@ use uuid::Uuid;
 
 use super::{
     chat_room::Room,
-    messages::{ClientMessage, Connect, CreateRoom, Disconnect, JoinRoom, JoinRoomLobby, Message},
+    messages::{
+        ClientMessage, Connect, CreateRoom, Disconnect, JoinRoom, JoinRoomLobby, ListRooms, Message,
+    },
     ws_conn::WsConn,
 };
 
@@ -96,5 +98,25 @@ impl Handler<JoinRoomLobby> for Lobby {
         });
 
         Some(room_addr.clone())
+    }
+}
+
+impl Handler<ListRooms> for Lobby {
+    type Result = ();
+
+    fn handle(&mut self, msg: ListRooms, _ctx: &mut Self::Context) {
+        let user = self.sessions.get(&msg.user_id);
+        if user.is_none() {
+            println!("User not in sessions");
+        }
+
+        let room_ids = self
+            .chat_rooms
+            .keys()
+            .map(|uuid| uuid.to_string())
+            .collect::<Vec<String>>()
+            .join(" ");
+
+        user.unwrap().do_send(Message(room_ids));
     }
 }
