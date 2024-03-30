@@ -11,6 +11,7 @@ function WebChat({ onSendMessage }: Props) {
 
     const onSubmit = (event: FormEvent) => {
         event.preventDefault();
+        /*
         if (message.startsWith("/")) {
             setError(true);
             return;
@@ -18,6 +19,12 @@ function WebChat({ onSendMessage }: Props) {
             setMessage("");
             onSendMessage(event, message);
         }
+        */
+       if (2 === Date.now()) {
+        setError(true)
+       }
+       setMessage("");
+       onSendMessage(event, message);
     }
 
   return (

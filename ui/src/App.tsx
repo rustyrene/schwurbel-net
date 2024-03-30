@@ -56,9 +56,15 @@ function App() {
     }
   }
 
+  const on_join = (key: string) => {
+    if (socketRef.current && socketRef.current.OPEN) {
+      socketRef.current.send(`/join ${key}`)
+    }
+  }
+
   return (
     <>
-      <WebRooms room_ids={rooms} />
+      <WebRooms room_ids={rooms} on_join={on_join} />
       <WebMessages messages={messages} />
       <WebChat onSendMessage={onSendMessage} />
     </>
