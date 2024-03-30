@@ -7,17 +7,24 @@ interface Props {
 
 function WebChat({ onSendMessage }: Props) {
     const [message, setMessage] = useState("");
+    const [error, setError] = useState(false);
 
     const onSubmit = (event: FormEvent) => {
-        setMessage("");
-        onSendMessage(event, message);
+        event.preventDefault();
+        if (message.startsWith("/")) {
+            setError(true);
+            return;
+        } else {
+            setMessage("");
+            onSendMessage(event, message);
+        }
     }
 
   return (
     <form onSubmit={(event) => onSubmit(event)}>
         <div className="input-group mb3">
             <span className="input-group-text text-bg-primary"><FiSend /></span>
-            <input type="text" value={message} className="form-control" onChange={(event) => setMessage(event.target.value)}/>
+            <input type="text" value={message} className={`form-control ${error && "border-danger"}`} onChange={(event) => setMessage(event.target.value)}/>
             <button className="btn btn-primary">Send</button>
         </div>
     </form>
