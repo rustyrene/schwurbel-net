@@ -72,6 +72,10 @@ impl Handler<CreateRoom> for Lobby {
         room.add_user(msg.creater_id, creater_addr.clone());
         let room_addr = room.start();
 
+        for (_, user_addr) in self.sessions.clone() {
+            user_addr.do_send(Message(format!("/created {}", room_id.clone())))
+        }
+
         self.chat_rooms.insert(room_id, room_addr.clone());
 
         room_addr
@@ -117,6 +121,7 @@ impl Handler<ListRooms> for Lobby {
             .collect::<Vec<String>>()
             .join(" ");
 
-        user.unwrap().do_send(Message(room_ids));
+        user.unwrap()
+            .do_send(Message(format!("/list {}", room_ids)));
     }
 }
