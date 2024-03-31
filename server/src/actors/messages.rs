@@ -54,8 +54,16 @@ pub struct JoinRoom {
     pub user_addr: Addr<WsConn>,
 }
 
+// List all existing rooms
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct ListRooms {
     pub user_id: Uuid,
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct LeaveRoom {
+    pub user_id: Uuid,
+    pub room_id: Uuid,
 }

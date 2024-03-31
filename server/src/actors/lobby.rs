@@ -6,7 +6,8 @@ use uuid::Uuid;
 use super::{
     chat_room::Room,
     messages::{
-        ClientMessage, Connect, CreateRoom, Disconnect, JoinRoom, JoinRoomLobby, ListRooms, Message,
+        ClientMessage, Connect, CreateRoom, Disconnect, JoinRoom, JoinRoomLobby, LeaveRoom,
+        ListRooms, Message,
     },
     ws_conn::WsConn,
 };
@@ -72,8 +73,12 @@ impl Handler<CreateRoom> for Lobby {
         room.add_user(msg.creater_id, creater_addr.clone());
         let room_addr = room.start();
 
-        for (_, user_addr) in self.sessions.clone() {
-            user_addr.do_send(Message(format!("/created {}", room_id.clone())))
+        for (user_id, user_addr) in self.sessions.clone() {
+            if user_id != msg.creater_id {
+                user_addr.do_send(Message(format!("/created {}", room_id.clone())));
+            } else {
+                user_addr.do_send(Message(format!("/creator {}", room_id.clone())));
+            }
         }
 
         self.chat_rooms.insert(room_id, room_addr.clone());
@@ -123,5 +128,27 @@ impl Handler<ListRooms> for Lobby {
 
         user.unwrap()
             .do_send(Message(format!("/list {}", room_ids)));
+    }
+}
+
+impl Handler<LeaveRoom> for Lobby {
+    type Result = ();
+
+    fn handle(&mut self, msg: LeaveRoom, _ctx: &mut Self::Context) {
+        let room = match self.chat_rooms.get(&msg.room_id) {
+            Some(room) => room,
+            None => {
+                self.sessions
+                    .get(&msg.user_id)
+                    .unwrap()
+                    .do_send(Message("/error Chatroom not found".to_string()));
+                return;
+            }
+        };
+
+        room.do_send(LeaveRoom {
+            user_id: msg.user_id,
+            room_id: msg.room_id,
+        });
     }
 }

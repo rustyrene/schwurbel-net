@@ -9,7 +9,7 @@ use crate::actors::messages::Disconnect;
 use super::{
     chat_room::Room,
     lobby::Lobby,
-    messages::{ClientMessage, Connect, CreateRoom, JoinRoomLobby, ListRooms, Message},
+    messages::{ClientMessage, Connect, CreateRoom, JoinRoomLobby, LeaveRoom, ListRooms, Message},
 };
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -125,11 +125,11 @@ fn handle_message(ws_conn: &WsConn, msg: String, ctx: &mut WebsocketContext<WsCo
             "/create" => create_room(ws_conn, ctx),
             "/join" => join_room(ws_conn, ctx, v),
             "/list" => list_rooms(ws_conn, ctx),
+            "/leave" => leave_room(ws_conn, ctx, v),
             _ => (),
         };
     } else {
         if ws_conn.room_addr.is_some() {
-            println!("Write to room");
             ws_conn
                 .room_addr
                 .to_owned()
@@ -140,6 +140,28 @@ fn handle_message(ws_conn: &WsConn, msg: String, ctx: &mut WebsocketContext<WsCo
                 });
         }
     }
+}
+
+fn leave_room(ws_conn: &WsConn, ctx: &mut WebsocketContext<WsConn>, msg: Vec<&str>) {
+    if msg.len() < 2 {
+        println!("{}", msg.len());
+        ctx.address()
+            .do_send(Message("/error No Room Address provided".to_string()));
+        return;
+    }
+    let room_id = match Uuid::parse_str(msg[1]) {
+        Ok(room_id) => room_id,
+        Err(_) => {
+            ctx.address()
+                .do_send(Message("/error Invalid Room Address".to_string()));
+            return;
+        }
+    };
+
+    ws_conn.lobby_addr.do_send(LeaveRoom {
+        user_id: ws_conn.id,
+        room_id,
+    });
 }
 
 fn list_rooms(ws_conn: &WsConn, _ctx: &mut WebsocketContext<WsConn>) {

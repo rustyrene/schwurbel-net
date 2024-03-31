@@ -6,8 +6,7 @@ import WebRooms from "./Chat/WebRooms";
 function App() {
   const [messages, setMessages] = useState<WebMessage[]>([]);
   const [rooms, setRooms] = useState<string[]>([]);
-
-  console.log(rooms);
+  const [joinedRoom, setJoinedRoom] = useState<string|null>(null);
 
   //setting up websocket to server
   const socketRef = useRef<WebSocket | null>(null);
@@ -17,9 +16,13 @@ function App() {
       if (command.startsWith("/created")) {
         setRooms(prevRooms => [...prevRooms, command.split(" ")[1]]);
       }
+      if (command.startsWith("/creator")) {
+        setRooms(prevRooms => [...prevRooms, command.split(" ")[1]]);
+        setJoinedRoom(command.split(" ")[1]);
+      }
       if (command.startsWith("/list")) {
         const rooms = command.split(" ").splice(1);
-        setRooms(prevRooms => [...prevRooms, ...rooms]);
+        setRooms([...rooms.filter(room => rooms.indexOf(room) !== -1)]);
       }
     }
 
@@ -37,6 +40,7 @@ function App() {
     socketRef.current = new WebSocket("ws://localhost:3000/ws/");
     socketRef.current.addEventListener("message", (event) => onReciveMessage(event))
     socketRef.current.addEventListener("open", () => {
+      console.log("LIST IT");
       socketRef.current?.send("/list");
     })
     return () => {
@@ -58,13 +62,14 @@ function App() {
 
   const on_join = (key: string) => {
     if (socketRef.current && socketRef.current.OPEN) {
-      socketRef.current.send(`/join ${key}`)
+      socketRef.current.send(`/join ${key}`);
+      setJoinedRoom(key);
     }
   }
 
   return (
     <>
-      <WebRooms room_ids={rooms} on_join={on_join} />
+      <WebRooms room_ids={rooms} joined_room={joinedRoom} on_join={on_join} />
       <WebMessages messages={messages} />
       <WebChat onSendMessage={onSendMessage} />
     </>
