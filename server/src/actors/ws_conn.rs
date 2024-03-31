@@ -49,7 +49,7 @@ impl WsConn {
         self.room_addr = Some(room_addr);
     }
 
-    pub fn _leave_room(&mut self) {
+    pub fn leave_room(&mut self) {
         self.room_addr = None;
     }
 }
@@ -104,7 +104,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsConn {
                 ctx.close(reason);
                 ctx.stop();
             }
-            ws::Message::Text(msg) => handle_message(&self, msg.to_string(), ctx),
+            ws::Message::Text(msg) => handle_message(self, msg.to_string(), ctx),
         }
     }
 }
@@ -117,7 +117,7 @@ impl Handler<Message> for WsConn {
     }
 }
 
-fn handle_message(ws_conn: &WsConn, msg: String, ctx: &mut WebsocketContext<WsConn>) {
+fn handle_message(ws_conn: &mut WsConn, msg: String, ctx: &mut WebsocketContext<WsConn>) {
     if msg.starts_with("/") {
         let v: Vec<&str> = msg.splitn(2, " ").collect();
 
@@ -142,7 +142,7 @@ fn handle_message(ws_conn: &WsConn, msg: String, ctx: &mut WebsocketContext<WsCo
     }
 }
 
-fn leave_room(ws_conn: &WsConn, ctx: &mut WebsocketContext<WsConn>, msg: Vec<&str>) {
+fn leave_room(ws_conn: &mut WsConn, ctx: &mut WebsocketContext<WsConn>, msg: Vec<&str>) {
     if msg.len() < 2 {
         println!("{}", msg.len());
         ctx.address()
@@ -162,6 +162,7 @@ fn leave_room(ws_conn: &WsConn, ctx: &mut WebsocketContext<WsConn>, msg: Vec<&st
         user_id: ws_conn.id,
         room_id,
     });
+    ws_conn.leave_room();
 }
 
 fn list_rooms(ws_conn: &WsConn, _ctx: &mut WebsocketContext<WsConn>) {
