@@ -48,15 +48,24 @@ function App() {
     }
   }, [])
 
+  const leaveRoom = () => {
+    socketRef.current?.send(`/leave ${joinedRoom}`);
+    setJoinedRoom(null);
+  }
+
   const onSendMessage = (event: FormEvent, msg:string) => {
     event.preventDefault();
     if (socketRef.current && socketRef.current.readyState == WebSocket.OPEN) {
-      socketRef.current.send(msg);
-      //add message to record
-      setMessages([...messages, {
-        msg: msg,
-        isAuthor: true,
-      }]);
+      if(msg.startsWith("/leave")) {
+        leaveRoom();
+      } else {
+        socketRef.current.send(msg);
+        //add message to record
+        setMessages([...messages, {
+          msg: msg,
+          isAuthor: true,
+        }]);
+      }
     }
   }
 
@@ -69,9 +78,25 @@ function App() {
 
   return (
     <>
-      <WebRooms room_ids={rooms} joined_room={joinedRoom} on_join={on_join} />
-      <WebMessages messages={messages} />
-      <WebChat onSendMessage={onSendMessage} />
+    <div className="container-fluid">
+      <div className="row">
+        {/* Chat Rooms */}
+        <div className="col-md-3">
+        <WebRooms room_ids={rooms} joined_room={joinedRoom} on_join={on_join} />
+        </div>
+
+        {/* Chat */}
+        <div className="col-md-9">
+          <div className="messages">
+            <WebMessages messages={messages} />
+          </div>
+          <div className="chat-input">
+            <WebChat onSendMessage={onSendMessage} />
+          </div>
+        </div>
+
+      </div>
+    </div>
     </>
   )
 }

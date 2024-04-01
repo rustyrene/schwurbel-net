@@ -10,28 +10,24 @@ function WebChat({ onSendMessage }: Props) {
     const [error, setError] = useState(false);
 
     const onSubmit = (event: FormEvent) => {
-        event.preventDefault();
-        /*
-        if (message.startsWith("/")) {
+        if(message === "") {
             setError(true);
-            return;
-        } else {
-            setMessage("");
-            onSendMessage(event, message);
         }
-        */
-       if (2 === Date.now()) {
-        setError(true)
-       }
+        event.preventDefault();
        setMessage("");
        onSendMessage(event, message);
+    }
+
+    const handleChange = (input: string) => {
+        setError(false);
+        setMessage(input);
     }
 
   return (
     <form onSubmit={(event) => onSubmit(event)}>
         <div className="input-group mb3">
             <span className="input-group-text text-bg-primary"><FiSend /></span>
-            <input type="text" value={message} className={`form-control ${error && "border-danger"}`} onChange={(event) => setMessage(event.target.value)}/>
+            <input type="text" value={message} className={`form-control ${error && "border-danger"}`} onChange={(event) => handleChange(event.target.value)}/>
             <button className="btn btn-primary">Send</button>
         </div>
     </form>

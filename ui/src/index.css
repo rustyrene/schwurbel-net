@@ -1,0 +1,32 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+.webrooms {
+    background-color: #f2f2f2;
+    height: 100vh;
+    overflow-y: auto;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 30%;
+}
+
+.chat-input {
+    position: fixed;
+    bottom: 0;
+    width: 70%;
+    padding-bottom: 26px;
+}
+
+.messages {
+    height: 90vh;
+    overflow-y: auto;
+}
