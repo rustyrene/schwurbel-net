@@ -12,6 +12,7 @@ function WebChat({ onSendMessage }: Props) {
     const onSubmit = (event: FormEvent) => {
         if(message === "") {
             setError(true);
+            return;
         }
         event.preventDefault();
        setMessage("");
