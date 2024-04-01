@@ -30,6 +30,7 @@ impl Room {
 
     pub fn remove_user(&mut self, user_id: Uuid) {
         self.users.remove(&user_id);
+        println!("{:?}", self.users);
     }
 }
 

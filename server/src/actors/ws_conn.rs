@@ -143,8 +143,8 @@ fn handle_message(ws_conn: &mut WsConn, msg: String, ctx: &mut WebsocketContext<
 }
 
 fn leave_room(ws_conn: &mut WsConn, ctx: &mut WebsocketContext<WsConn>, msg: Vec<&str>) {
+    println!("{:?}", msg);
     if msg.len() < 2 {
-        println!("{}", msg.len());
         ctx.address()
             .do_send(Message("/error No Room Address provided".to_string()));
         return;
