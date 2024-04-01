@@ -9,21 +9,23 @@ body {
     overflow: hidden;
 }
 
-.webrooms {
-    background-color: #f2f2f2;
-    height: 100vh;
-    overflow-y: auto;
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 30%;
-}
-
 .chat-input {
     position: fixed;
     bottom: 0;
     width: 70%;
     padding-bottom: 26px;
+}
+
+.create-room-btn {
+    position: fixed;
+    bottom: 0;
+    width: 30%;
+    padding-bottom: 26px;
+}
+
+.chat-rooms {
+    height: 90vh;
+    overflow-y: auto;
 }
 
 .messages {

@@ -81,7 +81,7 @@ function App() {
     <div className="container-fluid">
       <div className="row">
         {/* Chat Rooms */}
-        <div className="col-md-3">
+        <div className="col-md-3 chat-rooms">
         <WebRooms room_ids={rooms} joined_room={joinedRoom} on_join={on_join} />
         </div>
 

@@ -1,3 +1,5 @@
+import { IoAdd } from "react-icons/io5";
+
 interface Props {
     room_ids: string[];
     joined_room: string | null;
@@ -19,8 +21,11 @@ function WebRooms({ room_ids, joined_room, on_join}: Props) {
               <h5 className="mb-1">{room_id}</h5>
               <small><span className="badge text-bg-primary rounded-pill"></span></small>
             </div>
-            <p className="mb-1">Some Text</p>
+            <p className="mb-1">Room Description</p>
           </a>)}
+        </div>
+        <div className="d-flex create-room-btn">
+          <button className="btn btn-primary ms-3"><IoAdd className="fs-3" /> Create Room</button>
         </div>
     </>
   )
